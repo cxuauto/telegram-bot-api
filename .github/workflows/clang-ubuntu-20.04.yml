@@ -51,5 +51,6 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.ref || 'latest' }}
         files: |
           telegram-bot-api_ubuntu20_clang_x64.zip
