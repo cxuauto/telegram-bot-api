@@ -1,0 +1,57 @@
+name: release-gcc-ubuntu-x64
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        
+    - name: Environment Setup
+      shell: bash
+      run: |
+        sudo apt-get update
+        #sudo apt-get upgrade
+        sudo apt-get install make git zlib1g-dev libssl-dev gperf cmake g++
+        rm -rf build 
+        mkdir build
+        
+        #upload_url=$(curl -sL https://api.github.com/repos/cxuauto/telegram-bot-api/releases/latest | jq -r '.upload_url')
+        #echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV
+        #echo ${{ env.UPLOAD_URL }}
+  
+    - name: Build
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: |
+        pwd
+        ls -l ..
+        ls build || mkdir build
+        cd build
+        # -DCMAKE_INSTALL_PREFIX:PATH=.. 
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
+        cmake --build . --target install
+        cd ..
+        ls -l
+        ls -l bin
+        7z a telegram-bot-api_${{ matrix.os }}_gcc_x64.zip bin/*
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref || 'latest' }}
+        files: |
+          telegram-bot-api_${{ matrix.os }}_gcc_x64.zip
